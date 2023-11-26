@@ -407,6 +407,8 @@ int main(void) {
         }
         if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         if (isOn) {
 			double now = glfwGetTime();
 			if (now - prev >= 1) {
