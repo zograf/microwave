@@ -166,6 +166,7 @@
   <ItemGroup>
     <Image Include="C:\Users\Zograf\Downloads\background.png" />
     <Image Include="res\food.png" />
+    <Image Include="res\signature.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

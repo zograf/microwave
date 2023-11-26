@@ -60,6 +60,15 @@ int main(void) {
         -0.1, -0.5,        1.0, 0.0,
         -0.1,  -0.2,       1.0, 1.0,
 
+        // Signature
+
+         -0.8, -1.10,        1.0, 0.0,
+         -0.99, -1.10,       0.0, 0.0,
+         -0.99, -0.88,        0.0, 1.0,
+
+        -0.99,  -0.88,       0.0, 1.0,
+        -0.8, -1.10,        1.0, 0.0,
+        -0.8,  -0.88,       1.0, 1.0,
     };
 
     unsigned int textureStride = 4 * sizeof(float);
@@ -74,6 +83,7 @@ int main(void) {
 
     unsigned background = loadImageToTexture("res/background.png");
     unsigned food = loadImageToTexture("res/food.png");
+    unsigned signature = loadImageToTexture("res/signature.jpg");
 
     // Background texture
     glBindTexture(GL_TEXTURE_2D, background);
@@ -86,6 +96,15 @@ int main(void) {
 
     // Food texture
     glBindTexture(GL_TEXTURE_2D, food);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Signature texture
+    glBindTexture(GL_TEXTURE_2D, signature);
     glGenerateMipmap(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -550,6 +569,16 @@ int main(void) {
 		glBindVertexArray(0);
 		glUseProgram(0);
 		glPointSize(4);
+
+        // Signature
+        glUseProgram(backgroundTextureShader);
+        glBindVertexArray(VAO[0]);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, signature);
+        glDrawArrays(GL_TRIANGLES, 12, 6);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindVertexArray(0);
+        glUseProgram(0);
 
 
 
