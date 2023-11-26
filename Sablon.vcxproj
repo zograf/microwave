@@ -151,6 +151,8 @@
     <None Include="lamp.vert" />
     <None Include="mainframe.frag" />
     <None Include="mainframe.vert" />
+    <None Include="slider.frag" />
+    <None Include="slider.vert" />
     <None Include="texture.frag" />
     <None Include="texture.vert" />
     <None Include="packages.config" />

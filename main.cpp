@@ -31,12 +31,13 @@ int main(void) {
     unsigned int mainFrameShader = createShader("mainframe.vert", "mainframe.frag");
     unsigned int flashShader = createShader("flash.vert", "flash.frag");
     unsigned int lampShader = createShader("lamp.vert", "lamp.frag");
+    unsigned int sliderShader = createShader("slider.vert", "slider.frag");
 
-    unsigned int VAO[8];
-    unsigned int VBO[8];
+    unsigned int VAO[16];
+    unsigned int VBO[16];
 
-    glGenVertexArrays(8, VAO);
-    glGenBuffers(8, VBO);
+    glGenVertexArrays(16, VAO);
+    glGenBuffers(16, VBO);
 
     float textureBackground[] = {
 
@@ -274,6 +275,7 @@ int main(void) {
     glBindVertexArray(0);
 
 
+    // Lamp
     const int CRES = 180;
     const int xOffset = -11;
     const int yOffset = 5;
@@ -300,12 +302,49 @@ int main(void) {
     glUniform1f(uRyLoc, 0.05);
     glUniform3f(uColLoc, 0.0, 0.0, 0.0);
 
-    int i = 0;
-    glfwSetTime(0);
 
+    // Slider
+    float sliderLine[] = {
+         0.12, -0.5,
+         0.53, -0.5,
+    };
 
+    unsigned int sliderLineStride = 2 * sizeof(float);
+
+    glBindVertexArray(VAO[7]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[7]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sliderLine), sliderLine, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sliderLineStride, (void*)0);
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    float sliderKnob[] = {
+		 0.12, -0.55,    1.0, 1.0, 0.0, 1.0,
+         0.14, -0.55,   1.0, 1.0, 0.0, 1.0,
+         0.14, -0.45,    1.0, 1.0, 0.0, 1.0,
+
+         0.12,  -0.55,     1.0, 1.0, 0.0, 1.0,
+         0.14, -0.45,     1.0, 1.0, 0.0, 1.0,
+         0.12, -0.45,     1.0, 1.0, 0.0, 1.0,
+    };
+
+    unsigned int sliderKnobStride = 6 * sizeof(float);
+
+    glBindVertexArray(VAO[8]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[8]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sliderKnob), sliderKnob, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sliderKnobStride, (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sliderKnobStride, (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(sliderShader);
+    unsigned int sliderOffset = glGetUniformLocation(sliderShader, "offset");
+    float sliderXOffset = 0.0;
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 	glfwSwapInterval(1);
@@ -313,6 +352,10 @@ int main(void) {
     bool isClosed = true;
     bool isBlending = true;
     bool isOn = false;
+
+    int seconds = 0;
+
+    double prev = glfwGetTime();
 
     while (!glfwWindowShouldClose(window)) {
 
@@ -322,7 +365,7 @@ int main(void) {
             isOn = false;
         }
         if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) isClosed = true;
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && isClosed) {
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && isClosed && seconds > 0) {
             isOn = true;
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) isOn = false;
@@ -334,6 +377,35 @@ int main(void) {
 			isBlending = true;
 			glEnable(GL_BLEND);
         }
+
+        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && !isOn) {
+            sliderXOffset += 0.02;
+            seconds++;
+            if (sliderXOffset >= 0.4) sliderXOffset = 0.4;
+            if (seconds >= 20) seconds = 20;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS && !isOn) {
+            sliderXOffset -= 0.02;
+            seconds--;
+            if (sliderXOffset <= 0.0) sliderXOffset = 0.0;
+            if (seconds <= 0) seconds = 0;
+        }
+
+        if (isOn) {
+			double now = glfwGetTime();
+			if (now - prev >= 1) {
+				sliderXOffset -= 0.02;
+                if (sliderXOffset <= 0.0) sliderXOffset = 0.0;
+                seconds--;
+                if (seconds <= 0) seconds = 0;
+				prev = now;
+			}
+
+            if(seconds == 0) {
+                isOn = false;
+            }
+        } else prev = glfwGetTime();
 
         // Background
         glUseProgram(textureShader);
@@ -409,9 +481,27 @@ int main(void) {
 		glUseProgram(0);
 
 
+		// Slider
+		glLineWidth(8.0f);
+		glUseProgram(mainFrameShader);
+		glBindVertexArray(VAO[7]);
+		glDrawArrays(GL_LINE_STRIP, 0, 2);
+		glUseProgram(0);
+		glBindVertexArray(0);
+		glLineWidth(1.0f);
+
+		glUseProgram(sliderShader);
+		glBindVertexArray(VAO[8]);
+		glUniform1f(sliderOffset, sliderXOffset);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		glUseProgram(0);
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
 
 
     glDeleteTextures(1, &background);
