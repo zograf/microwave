@@ -27,19 +27,32 @@ int main(void) {
     unsigned int textureShader = createShader("texture.vert", "texture.frag");
     unsigned int mainFrameShader = createShader("mainframe.vert", "mainframe.frag");
 
-    unsigned int VAO[4];
-    unsigned int VBO[4];
+    unsigned int VAO[8];
+    unsigned int VBO[8];
 
-    glGenVertexArrays(4, VAO);
-    glGenBuffers(4, VBO);
+    glGenVertexArrays(8, VAO);
+    glGenBuffers(8, VBO);
 
     float textureBackground[] = {
+
+        // Background
          1, -1,        1.0, 0.0,
         -1, -1,        0.0, 0.0,
         -1,  1,        0.0, 1.0,
+
         -1,  1,        0.0, 1.0,
          1, -1,        1.0, 0.0,
          1,  1,        1.0, 1.0,
+
+         // Food
+         -0.1, -0.47,       1.0, 0.0,
+         -0.45, -0.47,        0.0, 0.0,
+         -0.45, -0.2,        0.0, 1.0,
+
+        -0.45,  -0.2,       0.0, 1.0,
+        -0.1, -0.47,        1.0, 0.0,
+        -0.1,  -0.2,       1.0, 1.0,
+
     };
 
     unsigned int textureStride = 4 * sizeof(float);
@@ -53,9 +66,19 @@ int main(void) {
     glEnableVertexAttribArray(1);
 
     unsigned background = loadImageToTexture("res/background.png");
+    unsigned food = loadImageToTexture("res/food.png");
 
     // Background texture
     glBindTexture(GL_TEXTURE_2D, background);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Food texture
+    glBindTexture(GL_TEXTURE_2D, food);
     glGenerateMipmap(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -67,40 +90,85 @@ int main(void) {
     float mainFrame[] = {
 
         // Main white
-        -0.7f, -0.8f,       1.0, 1.0, 1.0, 1.0,
-        0.7f, -0.8f,        1.0, 1.0, 1.0, 1.0,
-        0.7f, 0.4f,         1.0, 1.0, 1.0, 1.0,
+        -0.8f, -0.8f,       0.9, 0.9, 0.9, 1.0,
+        0.6f, -0.8f,        0.9, 0.9, 0.9, 1.0,
+        0.6f, 0.4f,         0.9, 0.9, 0.9, 1.0,
 
-        0.7f, 0.4f,         1.0, 1.0, 1.0, 1.0,
-        -0.7f, 0.4f,        1.0, 1.0, 1.0, 1.0,
-        -0.7f, -0.8f,       1.0, 1.0, 1.0, 1.0,
+        0.6f, 0.4f,         0.9, 0.9, 0.9, 1.0,
+        -0.8f, 0.4f,        0.9, 0.9, 0.9, 1.0,
+        -0.8f, -0.8f,       0.9, 0.9, 0.9, 1.0,
 
         // Side panel
-        0.2f, 0.35f,        0.3, 0.3, 0.3, 1.0,
-        0.65f, 0.35f,       0.3, 0.3, 0.3, 1.0,
-        0.65f, -0.75f,      0.3, 0.3, 0.3, 1.0,
+        0.1f, 0.35f,        0.3, 0.3, 0.3, 1.0,
+        0.55f, 0.35f,       0.3, 0.3, 0.3, 1.0,
+        0.55f, -0.75f,      0.3, 0.3, 0.3, 1.0,
 
-        0.65f, -0.75f,      0.3, 0.3, 0.3, 1.0,
-        0.2f, -0.75f,       0.3, 0.3, 0.3, 1.0,
-        0.2f, 0.35f,        0.3, 0.3, 0.3, 1.0,
+        0.55f, -0.75f,      0.3, 0.3, 0.3, 1.0,
+        0.1f, -0.75f,       0.3, 0.3, 0.3, 1.0,
+        0.1f, 0.35f,        0.3, 0.3, 0.3, 1.0,
 
         // 3D side
-        0.7f, -0.8f,        0.85, 0.85, 0.85, 1.0,
-        0.9f, -0.6f,        0.85, 0.85, 0.85, 1.0,
-        0.7f, 0.4f,         0.85, 0.85, 0.85, 1.0,
+        0.6f, -0.8f,        0.7, 0.7, 0.7, 1.0,
+        0.8f, -0.6f,        0.7, 0.7, 0.7, 1.0,
+        0.6f, 0.4f,         0.7, 0.7, 0.7, 1.0,
 
-        0.7f, 0.4f,         0.85, 0.85, 0.85, 1.0,
-        0.9f, 0.6f,         0.85, 0.85, 0.85, 1.0,
-        0.9f, -0.6f,        0.85, 0.85, 0.85, 1.0,
+        0.6f, 0.4f,         0.7, 0.7, 0.7, 1.0,
+        0.8f, 0.6f,         0.7, 0.7, 0.7, 1.0,
+        0.8f, -0.6f,        0.7, 0.7, 0.7, 1.0,
 
         // 3D top
-        -0.7f, 0.4f,        0.85, 0.85, 0.85, 1.0,
-        0.7f, 0.4f,         0.85, 0.85, 0.85, 1.0,
-        0.9f, 0.6f,         0.85, 0.85, 0.85, 1.0,
+        -0.8f, 0.4f,        1.0, 1.0, 1.0, 1.0,
+        0.6f, 0.4f,         1.0, 1.0, 1.0, 1.0,
+        0.8f, 0.6f,         1.0, 1.0, 1.0, 1.0,
 
-        -0.5f, 0.6f,        0.85, 0.85, 0.85, 1.0,
-        0.9f, 0.6f,         0.85, 0.85, 0.85, 1.0,
-        -0.7f, 0.4f,        0.85, 0.85, 0.85, 1.0,
+        -0.6f, 0.6f,        1.0, 1.0, 1.0, 1.0,
+        0.8f, 0.6f,         1.0, 1.0, 1.0, 1.0,
+        -0.8f, 0.4f,        1.0, 1.0, 1.0, 1.0,
+
+        // Shadow bottom
+        -0.7f, -0.9f,       0.0, 0.0, 0.0, 0.4,
+        0.7f, -0.9f,        0.0, 0.0, 0.0, 0.4,
+        -0.8f, -0.8f,       0.0, 0.0, 0.0, 0.4,
+
+        -0.8f, -0.8f,       0.0, 0.0, 0.0, 0.4,
+        0.6f, -0.8f,        0.0, 0.0, 0.0, 0.4,
+        0.7f, -0.9f,        0.0, 0.0, 0.0, 0.4,
+
+        // Shadow side
+        0.6f, -0.8f,        0.0, 0.0, 0.0, 0.4,
+        0.7f, -0.9f,        0.0, 0.0, 0.0, 0.4,
+        0.8f, -0.6f,        0.0, 0.0, 0.0, 0.4,
+
+        0.8f, -0.6f,        0.0, 0.0, 0.0, 0.4,
+        0.7f, -0.9f,        0.0, 0.0, 0.0, 0.4,
+        0.9f, -0.7f,        0.0, 0.0, 0.0, 0.4,
+
+        // Inside left
+		-0.5, 0.3,        0.4, 0.4, 0.4, 1.0,
+		-0.5, -0.4,       0.4, 0.4, 0.4, 1.0,
+		-0.75, -0.7,      0.4, 0.4, 0.4, 1.0,
+
+	    -0.75, -0.7,      0.4, 0.4, 0.4, 1.0,
+		-0.5, 0.3,        0.4, 0.4, 0.4, 1.0,
+		-0.75,  0.3,      0.4, 0.4, 0.4, 1.0,
+
+        // Inside bottom
+		0.05, -0.4,       0.6, 0.6, 0.6, 1.0,
+		-0.5, -0.4,       0.6, 0.6, 0.6, 1.0,
+		-0.75, -0.7,      0.6, 0.6, 0.6, 1.0,
+
+	    -0.75, -0.7,      0.6, 0.6, 0.6, 1.0,
+		0.05, -0.4,       0.6, 0.6, 0.6, 1.0,
+		0.05,  -0.7,      0.6, 0.6, 0.6, 1.0,
+        
+        // Inside back
+		0.05, -0.4,       0.2, 0.2, 0.2, 1.0,
+		-0.5, -0.4,       0.2, 0.2, 0.2, 1.0,
+		-0.5, 0.3,        0.2, 0.2, 0.2, 1.0,
+
+	    -0.5,  0.3,       0.2, 0.2, 0.2, 1.0,
+		0.05, -0.4,       0.2, 0.2, 0.2, 1.0,
+		0.05,  0.3,       0.2, 0.2, 0.2, 1.0,
     };
     unsigned int mainFrameStride = 6 * sizeof(float);
 
@@ -110,6 +178,73 @@ int main(void) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, mainFrameStride, (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, mainFrameStride, (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Glass 
+    float glass[] = {
+
+        // Glass
+         0.05, -0.7,       0.678, 0.847, 0.902, 0.6,
+         -0.75, -0.7,      0.678, 0.847, 0.902, 0.6, 
+         -0.75, 0.3,      0.678, 0.847, 0.902, 0.6,
+
+        -0.75,  0.3,      0.678, 0.847, 0.902, 0.6,
+        0.05, -0.7,        0.678, 0.847, 0.902, 0.6,
+        0.05,  0.3,       0.678, 0.847, 0.902, 0.6,
+    };
+    unsigned int glassStride = 6 * sizeof(float);
+
+    glBindVertexArray(VAO[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glass), glass, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, glassStride, (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, glassStride, (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Door strip
+    float doorStrip[] = {
+
+        // Door strip
+         0.05, -0.7,
+         -0.75, -0.7,
+         -0.75, 0.3,
+        0.05,  0.3,
+         0.05, -0.7
+    };
+    unsigned int doorStride = 2 * sizeof(float);
+
+    glBindVertexArray(VAO[3]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(doorStrip), doorStrip, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, doorStride, (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Door handle
+    float doorHandle[] = {
+
+         0.04, -0.5,    0.0, 0.0, 0.0, 1.0,
+         0.07, -0.5,   0.0, 0.0, 0.0, 1.0,
+         0.07, 0.1,    0.0, 0.0, 0.0, 1.0,
+
+         0.04,  -0.5,     0.0, 0.0, 0.0, 1.0,
+         0.07, 0.1,     0.0, 0.0, 0.0, 1.0,
+         0.04, 0.1,     0.0, 0.0, 0.0, 1.0,
+    };
+    unsigned int doorHandleStride = 6 * sizeof(float);
+
+    glBindVertexArray(VAO[4]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[4]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(doorHandle), doorHandle, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, doorHandleStride, (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, doorHandleStride, (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -130,7 +265,7 @@ int main(void) {
         glUseProgram(textureShader);
         glBindVertexArray(VAO[0]);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureShader);
+        glBindTexture(GL_TEXTURE_2D, background);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
@@ -139,7 +274,40 @@ int main(void) {
         // Main frame
         glUseProgram(mainFrameShader);
         glBindVertexArray(VAO[1]);
-        glDrawArrays(GL_TRIANGLES, 0, 24);
+        glDrawArrays(GL_TRIANGLES, 0, 54);
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        // Food
+        glUseProgram(textureShader);
+        glBindVertexArray(VAO[0]);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, food);
+        glDrawArrays(GL_TRIANGLES, 6, 6);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        // Glass
+        glUseProgram(mainFrameShader);
+        glBindVertexArray(VAO[2]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        // Door
+        glLineWidth(5.0f);
+        glUseProgram(mainFrameShader);
+        glBindVertexArray(VAO[3]);
+        glDrawArrays(GL_LINE_STRIP, 0, 5);
+        glBindVertexArray(0);
+        glUseProgram(0);
+        glLineWidth(1.0f);
+
+        // Door Handle
+        glUseProgram(mainFrameShader);
+        glBindVertexArray(VAO[4]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
         glUseProgram(0);
         
