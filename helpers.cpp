@@ -5,6 +5,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "helpers.h"
+
 unsigned int compileShader(GLenum type, const char* source) {
     std::string content = "";
     std::ifstream file(source);
@@ -72,3 +74,4 @@ unsigned int createShader(const char* vsSource, const char* fsSource) {
 
     return program;
 }
+
