@@ -396,6 +396,17 @@ int main(void) {
             if (seconds <= 0) seconds = 0;
         }
 
+        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+            glEnable(GL_PROGRAM_POINT_SIZE);
+            glPointSize(4);
+        }
+        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glLineWidth(4.0f);
+        }
+        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
         if (isOn) {
 			double now = glfwGetTime();
 			if (now - prev >= 1) {
@@ -487,6 +498,7 @@ int main(void) {
 		glDrawArrays(GL_POINTS, 0, 1);
 		glBindVertexArray(0);
 		glUseProgram(0);
+		glPointSize(4);
 
 
 		// Slider
