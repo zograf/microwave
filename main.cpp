@@ -349,6 +349,25 @@ int main(void) {
     unsigned int sliderOffset = glGetUniformLocation(sliderShader, "offset");
     float sliderXOffset = 0.0;
 
+    // Status LED
+    float statusLED[] = {
+        0.50, -0.67,      1.0, 0.5, 0.5, 1.0
+    };
+
+    unsigned int statusLEDStride = 6 * sizeof(float);
+    unsigned int statusParam = glGetUniformLocation(flashShader, "param");
+
+    glBindVertexArray(VAO[9]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[9]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(statusLED), statusLED, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, statusLEDStride, (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, statusLEDStride, (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 	glfwSwapInterval(1);
@@ -518,6 +537,20 @@ int main(void) {
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 		glUseProgram(0);
+
+		// Status LED
+		glUseProgram(flashShader);
+		glBindVertexArray(VAO[9]);
+        
+        if (seconds == 0) glUniform1f(blinkParam, 1.0);
+        else glUniform1f(blinkParam, 0.0);
+
+		glPointSize(20);
+		glDrawArrays(GL_POINTS, 0, 1);
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glPointSize(4);
+
 
 
         glfwSwapBuffers(window);
