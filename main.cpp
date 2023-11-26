@@ -25,6 +25,13 @@ int main(void) {
         return error;
 
     unsigned int textureShader = createShader("texture.vert", "texture.frag");
+    unsigned int mainFrameShader = createShader("mainframe.vert", "mainframe.frag");
+
+    unsigned int VAO[4];
+    unsigned int VBO[4];
+
+    glGenVertexArrays(4, VAO);
+    glGenBuffers(4, VBO);
 
     float textureBackground[] = {
          1, -1,        1.0, 0.0,
@@ -35,12 +42,7 @@ int main(void) {
          1,  1,        1.0, 1.0,
     };
 
-    unsigned int textureStride = (2 + 2) * sizeof(float);
-
-    unsigned int VAO[4];
-    glGenVertexArrays(4, VAO);
-    unsigned int VBO[4];
-    glGenBuffers(4, VBO);
+    unsigned int textureStride = 4 * sizeof(float);
 
     glBindVertexArray(VAO[0]);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
@@ -61,6 +63,63 @@ int main(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    // Main frame
+    float mainFrame[] = {
+
+        // Main white
+        -0.7f, -0.8f,       1.0, 1.0, 1.0, 1.0,
+        0.7f, -0.8f,        1.0, 1.0, 1.0, 1.0,
+        0.7f, 0.4f,         1.0, 1.0, 1.0, 1.0,
+
+        0.7f, 0.4f,         1.0, 1.0, 1.0, 1.0,
+        -0.7f, 0.4f,        1.0, 1.0, 1.0, 1.0,
+        -0.7f, -0.8f,       1.0, 1.0, 1.0, 1.0,
+
+        // Side panel
+        0.2f, 0.35f,        0.3, 0.3, 0.3, 1.0,
+        0.65f, 0.35f,       0.3, 0.3, 0.3, 1.0,
+        0.65f, -0.75f,      0.3, 0.3, 0.3, 1.0,
+
+        0.65f, -0.75f,      0.3, 0.3, 0.3, 1.0,
+        0.2f, -0.75f,       0.3, 0.3, 0.3, 1.0,
+        0.2f, 0.35f,        0.3, 0.3, 0.3, 1.0,
+
+        // 3D side
+        0.7f, -0.8f,        0.85, 0.85, 0.85, 1.0,
+        0.9f, -0.6f,        0.85, 0.85, 0.85, 1.0,
+        0.7f, 0.4f,         0.85, 0.85, 0.85, 1.0,
+
+        0.7f, 0.4f,         0.85, 0.85, 0.85, 1.0,
+        0.9f, 0.6f,         0.85, 0.85, 0.85, 1.0,
+        0.9f, -0.6f,        0.85, 0.85, 0.85, 1.0,
+
+        // 3D top
+        -0.7f, 0.4f,        0.85, 0.85, 0.85, 1.0,
+        0.7f, 0.4f,         0.85, 0.85, 0.85, 1.0,
+        0.9f, 0.6f,         0.85, 0.85, 0.85, 1.0,
+
+        -0.5f, 0.6f,        0.85, 0.85, 0.85, 1.0,
+        0.9f, 0.6f,         0.85, 0.85, 0.85, 1.0,
+        -0.7f, 0.4f,        0.85, 0.85, 0.85, 1.0,
+    };
+    unsigned int mainFrameStride = 6 * sizeof(float);
+
+    glBindVertexArray(VAO[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(mainFrame), mainFrame, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, mainFrameStride, (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, mainFrameStride, (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+
     while (!glfwWindowShouldClose(window)) {
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -74,9 +133,18 @@ int main(void) {
         glBindTexture(GL_TEXTURE_2D, textureShader);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindTexture(GL_TEXTURE_2D, 0);
+        glBindVertexArray(0);
+        glUseProgram(0);
 
+        // Main frame
+        glUseProgram(mainFrameShader);
+        glBindVertexArray(VAO[1]);
+        glDrawArrays(GL_TRIANGLES, 0, 24);
+        glBindVertexArray(0);
+        glUseProgram(0);
+        
+        
         glfwSwapBuffers(window);
-
         glfwPollEvents();
     }
 
