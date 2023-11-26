@@ -45,12 +45,12 @@ int main(void) {
          1,  1,        1.0, 1.0,
 
          // Food
-         -0.1, -0.47,       1.0, 0.0,
-         -0.45, -0.47,        0.0, 0.0,
-         -0.45, -0.2,        0.0, 1.0,
+         -0.1, -0.5,       1.0, 0.0,
+         -0.55, -0.5,        0.0, 0.0,
+         -0.55, -0.2,        0.0, 1.0,
 
-        -0.45,  -0.2,       0.0, 1.0,
-        -0.1, -0.47,        1.0, 0.0,
+        -0.55,  -0.2,       0.0, 1.0,
+        -0.1, -0.5,        1.0, 0.0,
         -0.1,  -0.2,       1.0, 1.0,
 
     };
@@ -141,7 +141,7 @@ int main(void) {
 
         0.8f, -0.6f,        0.0, 0.0, 0.0, 0.4,
         0.7f, -0.9f,        0.0, 0.0, 0.0, 0.4,
-        0.9f, -0.7f,        0.0, 0.0, 0.0, 0.4,
+        0.9f, -0.67f,        0.0, 0.0, 0.0, 0.4,
 
         // Inside left
 		-0.5, 0.3,        0.4, 0.4, 0.4, 1.0,
@@ -254,11 +254,23 @@ int main(void) {
     glBindVertexArray(0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+	glfwSwapInterval(1);
+
+    bool isClosed = true;
+    bool isBlending = true;
 
     while (!glfwWindowShouldClose(window)) {
 
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            glfwSetWindowShouldClose(window, GL_TRUE);
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
+        if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) isClosed = false;
+        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) isClosed = true;
+        if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+            isBlending = false;
+            glDisable(GL_BLEND);
+        }
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+			isBlending = true;
+			glEnable(GL_BLEND);
         }
 
         // Background
@@ -288,29 +300,30 @@ int main(void) {
         glBindVertexArray(0);
         glUseProgram(0);
 
-        // Glass
-        glUseProgram(mainFrameShader);
-        glBindVertexArray(VAO[2]);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
-        glUseProgram(0);
+        if (isClosed) {
+			// Glass
+			glUseProgram(mainFrameShader);
+			glBindVertexArray(VAO[2]);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+			glUseProgram(0);
 
-        // Door
-        glLineWidth(5.0f);
-        glUseProgram(mainFrameShader);
-        glBindVertexArray(VAO[3]);
-        glDrawArrays(GL_LINE_STRIP, 0, 5);
-        glBindVertexArray(0);
-        glUseProgram(0);
-        glLineWidth(1.0f);
+			// Door
+			glLineWidth(5.0f);
+			glUseProgram(mainFrameShader);
+			glBindVertexArray(VAO[3]);
+			glDrawArrays(GL_LINE_STRIP, 0, 5);
+			glBindVertexArray(0);
+			glUseProgram(0);
+			glLineWidth(1.0f);
 
-        // Door Handle
-        glUseProgram(mainFrameShader);
-        glBindVertexArray(VAO[4]);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
-        glUseProgram(0);
-        
+			// Door Handle
+			glUseProgram(mainFrameShader);
+			glBindVertexArray(VAO[4]);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+			glUseProgram(0);
+        }
         
         glfwSwapBuffers(window);
         glfwPollEvents();
