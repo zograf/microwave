@@ -6,6 +6,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "helpers.h"
+#include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -26,6 +27,7 @@ int main(void) {
 
     unsigned int textureShader = createShader("texture.vert", "texture.frag");
     unsigned int mainFrameShader = createShader("mainframe.vert", "mainframe.frag");
+    unsigned int flashShader = createShader("flash.vert", "flash.frag");
 
     unsigned int VAO[8];
     unsigned int VBO[8];
@@ -250,6 +252,25 @@ int main(void) {
     glBindVertexArray(0);
 
 
+    // Blinker LED
+    float blinkerLED[] = {
+        0.15, -0.67,      1.0, 0.5, 0.5, 1.0
+    };
+
+    unsigned int blinkerLEDStride = 6 * sizeof(float);
+    unsigned int blinkParam = glGetUniformLocation(flashShader, "param");
+
+    glBindVertexArray(VAO[5]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[5]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(blinkerLED), blinkerLED, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, blinkerLEDStride, (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, blinkerLEDStride, (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -258,12 +279,20 @@ int main(void) {
 
     bool isClosed = true;
     bool isBlending = true;
+    bool isOn = false;
 
     while (!glfwWindowShouldClose(window)) {
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
-        if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) isClosed = false;
+        if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+            isClosed = false;
+            isOn = false;
+        }
         if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) isClosed = true;
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && isClosed) {
+            isOn = true;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) isOn = false;
         if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
             isBlending = false;
             glDisable(GL_BLEND);
@@ -324,6 +353,18 @@ int main(void) {
 			glBindVertexArray(0);
 			glUseProgram(0);
         }
+
+        // Blinker LED
+		glUseProgram(flashShader);
+		glBindVertexArray(VAO[5]);
+
+        if (isOn) glUniform1f(blinkParam, abs(sin(glfwGetTime() * 10)));
+        else glUniform1f(blinkParam, 0.0);
+
+		glPointSize(20);
+		glDrawArrays(GL_POINTS, 0, 1);
+		glBindVertexArray(0);
+		glUseProgram(0);
         
         glfwSwapBuffers(window);
         glfwPollEvents();
