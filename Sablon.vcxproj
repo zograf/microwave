@@ -145,6 +145,8 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="backgroundtex.frag" />
+    <None Include="backgroundtex.vert" />
     <None Include="flash.frag" />
     <None Include="flash.vert" />
     <None Include="lamp.frag" />

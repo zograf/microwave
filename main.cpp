@@ -27,6 +27,7 @@ int main(void) {
     if (error != 0)
         return error;
 
+    unsigned int backgroundTextureShader = createShader("backgroundtex.vert", "backgroundtex.frag");
     unsigned int textureShader = createShader("texture.vert", "texture.frag");
     unsigned int mainFrameShader = createShader("mainframe.vert", "mainframe.frag");
     unsigned int flashShader = createShader("flash.vert", "flash.frag");
@@ -91,6 +92,9 @@ int main(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    unsigned int isOnTex = glGetUniformLocation(textureShader, "isOn");
+    glUniform1i(isOnTex, 0);
 
     // Main frame
     float mainFrame[] = {
@@ -408,7 +412,7 @@ int main(void) {
         } else prev = glfwGetTime();
 
         // Background
-        glUseProgram(textureShader);
+        glUseProgram(backgroundTextureShader);
         glBindVertexArray(VAO[0]);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, background);
@@ -437,6 +441,10 @@ int main(void) {
         glUseProgram(textureShader);
         glBindVertexArray(VAO[0]);
         glActiveTexture(GL_TEXTURE0);
+
+        if (isOn) glUniform1i(isOnTex, 1);
+        else glUniform1i(isOnTex, 0);
+
         glBindTexture(GL_TEXTURE_2D, food);
         glDrawArrays(GL_TRIANGLES, 6, 6);
         glBindTexture(GL_TEXTURE_2D, 0);

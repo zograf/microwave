@@ -4,9 +4,13 @@ in vec2 chTex;
 out vec4 outCol;
 
 uniform sampler2D uTex;
+uniform bool isOn;
 
 void main() {
-	outCol = texture(uTex, chTex); 
+	if (isOn)	
+		outCol = texture(uTex, chTex) * vec4(0.8, 0.9, 0.3, 1.0); 
+	else
+		outCol = texture(uTex, chTex); 
 
 	//boja na koordinatama chTex teksture vezane na teksturnoj jedinici uTex
 	//mijesanje 2 teksture se moze raditi sa mix(T1, T2, k) funkcijom gdje su
