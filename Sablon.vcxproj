@@ -147,6 +147,8 @@
   <ItemGroup>
     <None Include="flash.frag" />
     <None Include="flash.vert" />
+    <None Include="lamp.frag" />
+    <None Include="lamp.vert" />
     <None Include="mainframe.frag" />
     <None Include="mainframe.vert" />
     <None Include="texture.frag" />

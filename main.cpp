@@ -14,6 +14,8 @@
 #define WINDOW_WIDTH    1280
 #define WINDOW_HEIGHT   720
 #define WINDOW_TITLE    "[Microwave]"
+#define PI              3.14159265358979323846
+
 
 unsigned int initLibraries();
 static unsigned loadImageToTexture(const char* filePath);
@@ -28,6 +30,7 @@ int main(void) {
     unsigned int textureShader = createShader("texture.vert", "texture.frag");
     unsigned int mainFrameShader = createShader("mainframe.vert", "mainframe.frag");
     unsigned int flashShader = createShader("flash.vert", "flash.frag");
+    unsigned int lampShader = createShader("lamp.vert", "lamp.frag");
 
     unsigned int VAO[8];
     unsigned int VBO[8];
@@ -271,6 +274,36 @@ int main(void) {
     glBindVertexArray(0);
 
 
+    const int CRES = 180;
+    const int xOffset = -11;
+    const int yOffset = 5;
+    float circle[2 * CRES + 4];
+    circle[0] = 0.0 + xOffset;
+    circle[1] = 0.0 + yOffset;
+    for (int i = 0; i <= CRES; i++) {
+        circle[2 + 2 * i] = cos((3.141592 / 180) * (i * 360 / CRES)) + xOffset;
+        circle[2 + 2 * i + 1] = sin((3.141592 / 180) * (i * 360 / CRES)) + yOffset;
+    }
+
+    glBindVertexArray(VAO[6]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[6]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(circle), circle, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glClearColor(0.25, 0.25, 0.25, 0.25);
+    glUseProgram(lampShader);
+    unsigned int uRxLoc = glGetUniformLocation(lampShader, "uRx");
+    unsigned int uRyLoc = glGetUniformLocation(lampShader, "uRy");
+    unsigned int uColLoc = glGetUniformLocation(lampShader, "uCol");
+    glUniform1f(uRxLoc, 0.03);
+    glUniform1f(uRyLoc, 0.05);
+    glUniform3f(uColLoc, 0.0, 0.0, 0.0);
+
+    int i = 0;
+    glfwSetTime(0);
+
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -319,6 +352,15 @@ int main(void) {
         glBindVertexArray(0);
         glUseProgram(0);
 
+        // Lamp
+		glUseProgram(lampShader);
+		glBindVertexArray(VAO[6]);
+        if (isOn) glUniform3f(uColLoc, 0.7, 0.8, 0.2);
+        else glUniform3f(uColLoc, 0.0, 0.0, 0.0);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, sizeof(circle) / (2 * sizeof(float)));
+		glBindVertexArray(0);
+		glUseProgram(0);
+        
         // Food
         glUseProgram(textureShader);
         glBindVertexArray(VAO[0]);
@@ -365,7 +407,8 @@ int main(void) {
 		glDrawArrays(GL_POINTS, 0, 1);
 		glBindVertexArray(0);
 		glUseProgram(0);
-        
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
