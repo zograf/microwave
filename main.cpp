@@ -32,7 +32,7 @@ int main(void) {
     unsigned int mainFrameShader = createShader("mainframe.vert", "mainframe.frag");
     unsigned int flashShader = createShader("flash.vert", "flash.frag");
     unsigned int lampShader = createShader("lamp.vert", "lamp.frag");
-    unsigned int sliderShader = createShader("slider.vert", "slider.frag");
+    unsigned int sliderShader = createShader("knob.vert", "knob.frag");
 
     unsigned int VAO[16];
     unsigned int VBO[16];
@@ -343,13 +343,13 @@ int main(void) {
     glBindVertexArray(0);
 
     float sliderKnob[] = {
-		 0.12, -0.55,    1.0, 1.0, 0.0, 1.0,
-         0.14, -0.55,   1.0, 1.0, 0.0, 1.0,
-         0.14, -0.45,    1.0, 1.0, 0.0, 1.0,
+		 0.12, -0.55,    0.0, 1.0, 0.0, 1.0,
+         0.14, -0.55,   0.0, 1.0, 0.0, 1.0,
+         0.14, -0.45,    0.0, 1.0, 0.0, 1.0,
 
-         0.12,  -0.55,     1.0, 1.0, 0.0, 1.0,
-         0.14, -0.45,     1.0, 1.0, 0.0, 1.0,
-         0.12, -0.45,     1.0, 1.0, 0.0, 1.0,
+         0.12,  -0.55,     0.0, 1.0, 0.0, 1.0,
+         0.14, -0.45,     0.0, 1.0, 0.0, 1.0,
+         0.12, -0.45,     0.0, 1.0, 0.0, 1.0,
     };
 
     unsigned int sliderKnobStride = 6 * sizeof(float);
@@ -365,7 +365,7 @@ int main(void) {
     glBindVertexArray(0);
 
     glUseProgram(sliderShader);
-    unsigned int sliderOffset = glGetUniformLocation(sliderShader, "offset");
+    unsigned int sliderOffset = glGetUniformLocation(sliderShader, "uLoc");
     float sliderXOffset = 0.0;
 
     // Status LED

@@ -33,6 +33,16 @@
     <None Include="texture.vert">
       <Filter>Source Files\Shader Files</Filter>
     </None>
+    <None Include="backgroundtex.frag" />
+    <None Include="backgroundtex.vert" />
+    <None Include="flash.frag" />
+    <None Include="flash.vert" />
+    <None Include="lamp.frag" />
+    <None Include="lamp.vert" />
+    <None Include="mainframe.frag" />
+    <None Include="mainframe.vert" />
+    <None Include="knob.vert" />
+    <None Include="knob.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helpers.h">
@@ -44,6 +54,12 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="C:\Users\Zograf\Downloads\background.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\food.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\signature.jpg">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
