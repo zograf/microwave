@@ -531,8 +531,8 @@ int main(void) {
 		glUseProgram(flashShader);
 		glBindVertexArray(VAO[5]);
 
-        if (isOn) glUniform1f(blinkParam, abs(sin(glfwGetTime() * 10)));
-        else glUniform1f(blinkParam, 0.0);
+        if (isOn) glUniform4f(blinkParam, abs(sin(glfwGetTime() * 10)), 0.0, 0.0, 1.0);
+        else glUniform4f(blinkParam, 0.0, 0.0, 0.0, 1.0);
 
 		glPointSize(20);
 		glDrawArrays(GL_POINTS, 0, 1);
@@ -546,13 +546,13 @@ int main(void) {
 		glUseProgram(mainFrameShader);
 		glBindVertexArray(VAO[7]);
 		glDrawArrays(GL_LINE_STRIP, 0, 2);
-		glUseProgram(0);
 		glBindVertexArray(0);
+		glUseProgram(0);
 		glLineWidth(1.0f);
 
 		glUseProgram(sliderShader);
 		glBindVertexArray(VAO[8]);
-		glUniform1f(sliderOffset, sliderXOffset);
+		glUniform2f(sliderOffset, sliderXOffset, 0.0);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 		glUseProgram(0);
@@ -561,8 +561,8 @@ int main(void) {
 		glUseProgram(flashShader);
 		glBindVertexArray(VAO[9]);
         
-        if (seconds == 0) glUniform1f(blinkParam, 1.0);
-        else glUniform1f(blinkParam, 0.0);
+        if (seconds == 0) glUniform4f(blinkParam, 1.0, 0.0, 0.0, 1.0);
+        else glUniform4f(blinkParam, 0.0, 0.0, 0.0, 1.0);
 
 		glPointSize(20);
 		glDrawArrays(GL_POINTS, 0, 1);
