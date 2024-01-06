@@ -141,18 +141,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="helpers.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Render.cpp" />
-    <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="basic.frag" />
-    <None Include="basic.vert" />
+    <None Include="backgroundtex.frag" />
+    <None Include="backgroundtex.vert" />
+    <None Include="flash.frag" />
+    <None Include="flash.vert" />
+    <None Include="knob.frag" />
+    <None Include="knob.vert" />
+    <None Include="lamp.frag" />
+    <None Include="lamp.vert" />
+    <None Include="mainframe.frag" />
+    <None Include="mainframe.vert" />
+    <None Include="texture.frag" />
+    <None Include="texture.vert" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Render.h" />
-    <ClInclude Include="Shader.h" />
+    <ClInclude Include="helpers.h" />
+    <ClInclude Include="stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\Zograf\Downloads\background.png" />
+    <Image Include="res\food.png" />
+    <Image Include="res\signature.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
