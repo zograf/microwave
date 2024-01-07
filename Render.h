@@ -2,9 +2,10 @@
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h>
 
+#include "shader.hpp"
+
 class Render {
 private:
-    unsigned int unified_shader = 0;
     int window_width = 1400;
     int window_height = 900;
     unsigned int VAO = 0;

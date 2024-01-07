@@ -1,5 +1,5 @@
 ﻿#include "Render.h"
-#include "Shader.h"
+#include "Shader.hpp"
 
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -13,36 +13,13 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Model.hpp"
+
 int Render::do_render() {
     if (create_window())
         return 1;
 
-    load_shaders();
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++ PROMJENLJIVE I BAFERI +++++++++++++++++++++++++++++++++++++++++++++++++
-
-    float vertices[] = {
-        //X    Y    Z       R    G    B    A
-        0.25, 0.5, 0.75, 1.0, 0.0, 0.0, 0.0, //Crveni trougao - Prednji
-        -0.25, 0.5, 0.75, 1.0, 0.0, 0.0, 0.0,
-        0.0, -0.5, 0.75, 1.0, 0.0, 0.0, 0.0,
-
-        0.25, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, //Plavi trougao - Zadnji
-        -0.25, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0,
-        0.0, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0
-    };
-    unsigned int stride = (3 + 4) * sizeof(float);
-
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
     
     render_loop();
     
@@ -52,84 +29,116 @@ int Render::do_render() {
 }
 
 void Render::render_loop() {
-    // UNIFORME
+    Shader unified_shader = Shader("basic.vert", "basic.frag");
     
-    glm::mat4 model = glm::mat4(1.0f);
-    unsigned int modelLoc = glGetUniformLocation(unified_shader, "uM");
-
-    glm::mat4 view;
-    view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    unsigned int viewLoc = glGetUniformLocation(unified_shader, "uV");
-
-    glm::mat4 projectionO = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
-    glm::mat4 projectionP = glm::perspective(glm::radians(90.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
-    unsigned int projectionLoc = glGetUniformLocation(unified_shader, "uP");
-    
+    Model microwave("res/microwave.obj");
+    Model plate("res/microwave-plate.obj");
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++ RENDER LOOP - PETLJA ZA CRTANJE +++++++++++++++++++++++++++++++++++++++++++++++++
-    glUseProgram(unified_shader);
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionO));
-    glBindVertexArray(VAO);
+
+    float cam_x = 2.0f;
+    float cam_y = 0.0f;
+    float cam_z = 0.0f;
+
+    //Render petlja
+    unified_shader.use();
+    unified_shader.setVec3("uViewPos", 0, 0.5, 1);
+    unified_shader.setVec3("uLightColor", 1, 1, 0.7);
+    glm::mat4 projectionP = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    glm::mat4 projectionO = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
+    unified_shader.setMat4("uP", projectionP);
+    glm::mat4 view = glm::lookAt(glm::vec3(cam_x, cam_y, cam_z), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+    unified_shader.setMat4("uV", view);
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 plate_model = glm::mat4(1.0f);
+    plate_model = glm::scale(plate_model, glm::vec3(1.5, 1.5, 1.5));
+    float ptx = 25.0f;
+    float pty = -47.0f;
+    float ptz = 30.0f;
+    
+    float light_x = 0.2f;
+    float light_y = 0.14f;
+    float light_z = 0.12f;
+    plate_model = glm::scale(plate_model, glm::vec3(0.003, 0.003, 0.003));
+    plate_model = glm::translate(plate_model, glm::vec3(ptx, pty, ptz));
+    unified_shader.setVec3("uLightPos", light_x, light_y, light_z);
+    
 
     glClearColor(0.5, 0.5, 0.5, 1.0);
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
+    
+    bool is_running = false;
+    
     while (!glfwWindowShouldClose(window)) {
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            glfwSetWindowShouldClose(window, GL_TRUE);
-        }
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionP));
+            unified_shader.setMat4("uP", projectionP);
         }
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
-            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionO));
+            unified_shader.setMat4("uP", projectionO);
+        }
+        // Rotiranje levo desno
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        }
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, -1.0f, 0.0f));
         }
         // Rotiranje levo desno
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(0.5f), glm::vec3(0.0f, -1.0f, 0.0f));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
         }
         // Rotiranje gore dole
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(0.5f), glm::vec3(1.0f, 0.0f, 0.0f));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
         }
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(0.5f), glm::vec3(-1.0f, 0.0f, 0.0f));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         }
         // Zumiranje
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-            model = glm::scale(model, glm::vec3(1.1, 1.1, 1.1));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            view = glm::scale(view, glm::vec3(1.1, 1.1, 1.1));
         }
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-            model = glm::scale(model, glm::vec3(0.9, 0.9, 0.9));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            view = glm::scale(view, glm::vec3(0.9, 0.9, 0.9));
+        }
+        
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            is_running = true;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            is_running = false;
         }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        unified_shader.setMat4("uV", view);
+        unified_shader.setMat4("uM", model);
+        microwave.Draw(unified_shader);
+        unified_shader.setMat4("uM", plate_model);
+        
+        if (is_running) {
+            plate_model = glm::rotate(plate_model, glm::radians(3.0f), glm::vec3(0, 1, 0));
+            unified_shader.setVec3("uLightColor", 1, 1, 0.7);
+        } else {
+            unified_shader.setVec3("uLightColor", 0.2, 0.2, 0.2);
+        }
+            
+        
+        plate.Draw(unified_shader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 }
 
-void Render::load_shaders() {
-    unified_shader = Shader::create_shader("basic.vert", "basic.frag");
-}
-
 void Render::clean_up() {
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &VAO);
-    glDeleteProgram(unified_shader);
     
     glfwTerminate();
 }
