@@ -55,13 +55,19 @@ void Render::render_loop() {
     float pty = -47.0f;
     float ptz = 30.0f;
     
-    float light_x = 0.2f;
-    float light_y = 0.14f;
-    float light_z = 0.12f;
     plate_model = glm::scale(plate_model, glm::vec3(0.003, 0.003, 0.003));
     plate_model = glm::translate(plate_model, glm::vec3(ptx, pty, ptz));
-    unified_shader.setVec3("uLightPos", light_x, light_y, light_z);
-    
+
+    unified_shader.setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+    unified_shader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+    unified_shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+    unified_shader.setFloat("light.constant", 1.0f);
+    unified_shader.setFloat("light.linear", 0.9f);
+    unified_shader.setFloat("light.quadratic", 0.32f);
+    unified_shader.setVec3("light.position", 0.2f, 0.14f, 0.12f);
+    unified_shader.setVec3("light.direction", glm::vec3(-0.3, -3.0, 0.1));
+    unified_shader.setFloat("light.cutOff", glm::cos(glm::radians(45.0f)));
+    unified_shader.setFloat("light.outerCutOff", glm::cos(glm::radians(55.0f)));
 
     glClearColor(0.5, 0.5, 0.5, 1.0);
     glCullFace(GL_BACK);
@@ -125,7 +131,7 @@ void Render::render_loop() {
             plate_model = glm::rotate(plate_model, glm::radians(3.0f), glm::vec3(0, 1, 0));
             unified_shader.setVec3("uLightColor", 1, 1, 0.7);
         } else {
-            unified_shader.setVec3("uLightColor", 0.2, 0.2, 0.2);
+            unified_shader.setVec3("uLightColor", 0, 0, 0);
         }
             
         
