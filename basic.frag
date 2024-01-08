@@ -3,6 +3,8 @@
 struct Light {
     vec3 position;
     vec3 direction;
+    vec3 color;
+    
     float cutOff;
     float outerCutOff;
 
@@ -14,19 +16,26 @@ struct Light {
     float linear;
     float quadratic;
 };
+
+struct Material {
+    sampler2D uDiffMap1;
+    sampler2D uSpecMap1;
+};
+
+uniform Material material;
 uniform Light light;
+
+uniform vec3 uViewPos;
+uniform vec3 objectColor;
+uniform float alpha;
+uniform bool isModel;
 
 out vec4 FragColor;
 
 in vec3 chNormal;  
 in vec3 chFragPos;  
 in vec2 chUV;
-  
-uniform vec3 uViewPos; 
-uniform vec3 uLightColor;
 
-uniform sampler2D uDiffMap1;
-uniform sampler2D uSpecMap1;
 
 void main() {
     vec3 lightDir = normalize(light.position - chFragPos);
@@ -39,34 +48,35 @@ void main() {
         float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
         // ambient
-        vec3 ambient = light.ambient * texture(uDiffMap1, chUV).rgb;
+        vec3 ambient = light.ambient;
+        if (isModel)    ambient *= texture(material.uDiffMap1, chUV).rgb;
+        else            ambient *= objectColor;
 
         // diffuse
         vec3 norm = normalize(chNormal);
         vec3 lightDir = normalize(light.position - chFragPos);
         float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = light.diffuse * diff * texture(uDiffMap1, chUV).rgb * uLightColor;
+        
+        vec3 diffuse = light.diffuse * diff * light.color;
+        if (isModel)    diffuse *= texture(material.uDiffMap1, chUV).rgb;
+        else            diffuse *= objectColor;
 
         // specular
         vec3 viewDir = normalize(uViewPos - chFragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-        vec3 specular = light.specular * spec * texture(uSpecMap1, chUV).rgb * uLightColor;
-
-        //ambient *= attenuation;
-        diffuse *= attenuation;
-        specular *= attenuation;
         
-        diffuse *= intensity;
-        specular *= intensity;
+        vec3 specular = light.specular * spec * light.color;
+        if (isModel)    specular *= texture(material.uSpecMap1, chUV).rgb;
+        else            specular *= objectColor;
 
-        vec3 result = ambient + diffuse + specular;
-        FragColor = vec4(result, 1.0);
+        diffuse *= attenuation * intensity;
+        specular *= attenuation * intensity;
+
+        FragColor = vec4(ambient + diffuse + specular, alpha);
     } else {
-        FragColor = vec4(light.ambient * texture(uDiffMap1, chUV).rgb, 1.0);
+        if (isModel)    FragColor = vec4(light.ambient * texture(material.uDiffMap1, chUV).rgb, alpha);
+        else            FragColor = vec4(light.ambient * objectColor, alpha);
     }
-    
-    //FragColor = texture(uDiffMap1, chUV) * vec4(ambient + diffuse, 1.0);
-    //FragColor += texture(uSpecMap1, chUV) * vec4(specular, 1.0);
 }
 
