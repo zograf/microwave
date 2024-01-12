@@ -1,5 +1,5 @@
 
-
+#pragma once
 #ifndef MESH_H
 #define MESH_H
 
@@ -49,7 +49,7 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader& shader)
+    void Draw(const Shader& shader)
     {
         // bind appropriate textures
         unsigned int diffuseNr = 1;

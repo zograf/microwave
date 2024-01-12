@@ -1,68 +1,25 @@
 ﻿#include "Render.h"
-#include "Shader.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "Model.hpp"
 
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
-#include <fstream>
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "Door.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+void Render::setup_defaults(const Shader& unified_shader) {
+    projection_p = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    projection_o = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
+    view = glm::lookAt(glm::vec3(cam_x, cam_y, cam_z), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+    glm::vec3 uViewPos = glm::inverse(view)[3];
 
-#include "Model.hpp"
-
-int Render::do_render() {
-    if (create_window())
-        return 1;
-
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++ PROMJENLJIVE I BAFERI +++++++++++++++++++++++++++++++++++++++++++++++++
-
-    render_loop();
-
-    clean_up();
-
-    return 0;
-}
-
-void Render::render_loop() {
-    Shader unified_shader = Shader("basic.vert", "basic.frag");
-
-    Model microwave("res/microwave.obj");
-    Model plate("res/microwave-plate.obj");
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++ RENDER LOOP - PETLJA ZA CRTANJE +++++++++++++++++++++++++++++++++++++++++++++++++
-
-    float cam_x = 2.0f;
-    float cam_y = 0.0f;
-    float cam_z = 0.0f;
-
-    //Render petlja
     unified_shader.use();
-    unified_shader.setVec3("uViewPos", 0, 0.5, 1);
-    unified_shader.setVec3("light.color", 1, 1, 0.7);
-    glm::mat4 projectionP = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f,
-                                             100.0f);
-    glm::mat4 projectionO = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
-    unified_shader.setMat4("uP", projectionP);
-    glm::mat4 view = glm::lookAt(glm::vec3(cam_x, cam_y, cam_z), glm::vec3(0.0f, 0.0f, 0.0f),
-                                 glm::vec3(0.0f, 2.0f, 0.0f));
+    unified_shader.setVec3("uViewPos", uViewPos);
+    unified_shader.setMat4("uP", projection_p);
     unified_shader.setMat4("uV", view);
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 plate_model = glm::mat4(1.0f);
-    glm::mat4 door_model = glm::mat4(1.0f);
-    plate_model = glm::scale(plate_model, glm::vec3(1.5, 1.5, 1.5));
-    float ptx = 25.0f;
-    float pty = -47.0f;
-    float ptz = 30.0f;
-
-    plate_model = glm::scale(plate_model, glm::vec3(0.003, 0.003, 0.003));
-    plate_model = glm::translate(plate_model, glm::vec3(ptx, pty, ptz));
-
-    door_model = glm::rotate(door_model, glm::radians(90.0f), glm::vec3(0, 1, 0));
-
+    unified_shader.setVec3("light.color", 1, 1, 0.7);
     unified_shader.setVec3("light.ambient", 0.4f, 0.4f, 0.4f);
     unified_shader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
     unified_shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
@@ -73,70 +30,30 @@ void Render::render_loop() {
     unified_shader.setVec3("light.direction", glm::vec3(-0.3, -3.0, 0.1));
     unified_shader.setFloat("light.cutOff", glm::cos(glm::radians(45.0f)));
     unified_shader.setFloat("light.outerCutOff", glm::cos(glm::radians(55.0f)));
+}
 
+int Render::do_render(const Shader& unified_shader) {
+    setup_defaults(unified_shader);
+    render_loop(unified_shader);
 
-    // Transparent pane
-    float door[] = {
-        // Front face
-        -0.53f, -0.23f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.25f, -0.23f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.25f, 0.23f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.25f, 0.23f, 0.5f, 0.0f, 0.0f, 1.0f,
-        -0.53f, 0.23f, 0.5f, 0.0f, 0.0f, 1.0f,
-        -0.53f, -0.23f, 0.5f, 0.0f, 0.0f, 1.0f,
+    clean_up();
+    return 0;
+}
 
-        0.25f, -0.23f, 0.48f, 0.0f, 0.0f, -1.0f,
-        -0.53f, -0.23f, 0.48f, 0.0f, 0.0f, -1.0f,
-        -0.53f, 0.23f, 0.48f, 0.0f, 0.0f, -1.0f,
-        -0.53f, 0.23f, 0.48f, 0.0f, 0.0f, -1.0f,
-        0.25f, 0.23f, 0.48f, 0.0f, 0.0f, -1.0f,
-        0.25f, -0.23f, 0.48f, 0.0f, 0.0f, -1.0f,
+void Render::render_loop(const Shader& unified_shader) {
+    Model plate("res/microwave-plate.obj");
+    Model microwave("res/microwave.obj");
+    Door door = Door();
 
-        // Left face
-        -0.53f, -0.23f, 0.48f, -1.0f, 0.0f, 0.0f,
-        -0.53f, -0.23f, 0.5f, -1.0f, 0.0f, 0.0f,
-        -0.53f, 0.23f, 0.5f, -1.0f, 0.0f, 0.0f,
-        -0.53f, 0.23f, 0.5f, -1.0f, 0.0f, 0.0f,
-        -0.53f, 0.23f, 0.48f, -1.0f, 0.0f, 0.0f,
-        -0.53f, -0.23f, 0.48f, -1.0f, 0.0f, 0.0f,
-
-        // Right face
-        0.25f, -0.23f, 0.5f, 1.0f, 0.0f, 0.0f,
-        0.25f, -0.23f, 0.48f, 1.0f, 0.0f, 0.0f,
-        0.25f, 0.23f, 0.48f, 1.0f, 0.0f, 0.0f,
-        0.25f, 0.23f, 0.48f, 1.0f, 0.0f, 0.0f,
-        0.25f, 0.23f, 0.5f, 1.0f, 0.0f, 0.0f,
-        0.25f, -0.23f, 0.5f, 1.0f, 0.0f, 0.0f,
-
-        // Top face
-        -0.53f, 0.23f, 0.5f, 0.0f, 1.0f, 0.0f,
-        0.25f, 0.23f, 0.5f, 0.0f, 1.0f, 0.0f,
-        0.25f, 0.23f, 0.48f, 0.0f, 1.0f, 0.0f,
-        0.25f, 0.23f, 0.48f, 0.0f, 1.0f, 0.0f,
-        -0.53f, 0.23f, 0.48f, 0.0f, 1.0f, 0.0f,
-        -0.53f, 0.23f, 0.5f, 0.0f, 1.0f, 0.0f,
-
-        // Bottom face
-        0.25f, -0.23f, 0.5f, 0.0f, -1.0f, 0.0f,
-        -0.53f, -0.23f, 0.5f, 0.0f, -1.0f, 0.0f,
-        -0.53f, -0.23f, 0.48f, 0.0f, -1.0f, 0.0f,
-        -0.53f, -0.23f, 0.48f, 0.0f, -1.0f, 0.0f,
-        0.25f, -0.23f, 0.48f, 0.0f, -1.0f, 0.0f,
-        0.25f, -0.23f, 0.5f, 0.0f, -1.0f, 0.0f,
-    };
-    unsigned int stride = (3 + 3) * sizeof(float);
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(door), door, GL_STATIC_DRAW);
-    glBindVertexArray(VAO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
+    glm::mat4 microwave_model = glm::mat4(1.0f);
+    
+    glm::mat4 plate_model = glm::mat4(1.0f);
+    float ptx = 25.0f;
+    float pty = -47.0f;
+    float ptz = 30.0f;
+    plate_model = glm::scale(plate_model, glm::vec3(1.5, 1.5, 1.5));
+    plate_model = glm::scale(plate_model, glm::vec3(0.003, 0.003, 0.003));
+    plate_model = glm::translate(plate_model, glm::vec3(ptx, pty, ptz));
 
     glClearColor(0.5, 0.5, 0.5, 1.0);
     glCullFace(GL_BACK);
@@ -145,78 +62,11 @@ void Render::render_loop() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 
-    bool is_running = false;
-    bool is_open_animation = false;
-    bool is_close_animation = false;
-    bool is_open = false;
-
     int degree_counter = 0;
     while (!glfwWindowShouldClose(window)) {
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(window, true);
-        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-            unified_shader.setMat4("uP", projectionP);
-        }
-        if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-            unified_shader.setMat4("uP", projectionO);
-        }
-        // Rotiranje levo desno
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        }
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-        }
-        // Rotiranje levo desno
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        }
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-        }
-        // Rotiranje gore dole
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-        }
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        }
-        // Zumiranje
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-            view = glm::scale(view, glm::vec3(1.1, 1.1, 1.1));
-        }
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-            view = glm::scale(view, glm::vec3(0.9, 0.9, 0.9));
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
-            if (!is_close_animation && !is_open) {
-                is_open_animation = true;
-                is_running = false;
-                is_open = true;
-            }
-        }
-        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-            if (!is_open_animation && is_open) {
-                is_close_animation = true;
-                is_open = false;
-            }
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            is_running = true;
-        }
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            is_running = false;
-        }
-
+        handle_input(unified_shader);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         unified_shader.setMat4("uV", view);
-        unified_shader.setMat4("uM", model);
-        unified_shader.setBool("isModel", true);
-        unified_shader.setFloat("alpha", 1.0);
-
-        microwave.Draw(unified_shader);
 
         if (is_running) {
             plate_model = glm::rotate(plate_model, glm::radians(3.0f), glm::vec3(0, 1, 0));
@@ -228,9 +78,7 @@ void Render::render_loop() {
 
         if (is_open_animation) {
             degree_counter += 1;
-            door_model = glm::translate(door_model, glm::vec3(-0.53f, -0.23f, 0.48f));
-            door_model = glm::rotate(door_model, glm::radians(5.0f), glm::vec3(0, -1, 0));
-            door_model = glm::translate(door_model, glm::vec3(0.53f, 0.23f, -0.48f));
+            door.rotate(false);
             if (degree_counter > 18) {
                 degree_counter = 0;
                 is_open_animation = false;
@@ -238,36 +86,106 @@ void Render::render_loop() {
         }
         if (is_close_animation) {
             degree_counter += 1;
-            door_model = glm::translate(door_model, glm::vec3(-0.53f, -0.23f, 0.48f));
-            door_model = glm::rotate(door_model, glm::radians(5.0f), glm::vec3(0, 1, 0));
-            door_model = glm::translate(door_model, glm::vec3(0.53f, 0.23f, -0.48f));
+            door.rotate(true);
             if (degree_counter > 18) {
                 degree_counter = 0;
                 is_close_animation = false;
             }
         }
 
+        // Models
+        unified_shader.setBool("isModel", true);
+        unified_shader.setFloat("alpha", 1.0);
+        unified_shader.setMat4("uM", microwave_model);
+        microwave.Draw(unified_shader);
+
         unified_shader.setMat4("uM", plate_model);
         plate.Draw(unified_shader);
 
-
-        unified_shader.setBool("isModel", false);
-        unified_shader.setVec3("objectColor", glm::vec3(0.0, 0.0, 1.0));
-        unified_shader.setMat4("uM", door_model);
-
-        glBindVertexArray(VAO);
-        unified_shader.setFloat("alpha", 0.3);
-        glDrawArrays(GL_TRIANGLES, 0, 6 * 2);
-        unified_shader.setFloat("alpha", 1.0);
-        unified_shader.setVec3("objectColor", glm::vec3(0.0, 0.0, 0.0));
-        glDrawArrays(GL_TRIANGLES, 6 * 2, 6 * 4);
-        glBindVertexArray(0);
-
+        // Objects
+        door.draw(unified_shader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 }
+
+void Render::handle_input(const Shader& unified_shader) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+        unified_shader.setMat4("uP", projection_p);
+    }
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+        unified_shader.setMat4("uP", projection_o);
+    }
+    // Rotiranje levo desno
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+    // Rotiranje levo desno
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        view = glm::rotate(view, glm::radians(3.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        view = glm::rotate(view, glm::radians(3.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+    // Rotiranje gore dole
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        view = glm::rotate(view, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+    // Zumiranje
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        view = glm::scale(view, glm::vec3(1.1, 1.1, 1.1));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        view = glm::scale(view, glm::vec3(0.9, 0.9, 0.9));
+        glm::vec3 uViewPos = glm::inverse(view)[3];
+        unified_shader.setVec3("uViewPos", uViewPos);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+        if (!is_close_animation && !is_open) {
+            is_open_animation = true;
+            is_running = false;
+            is_open = true;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+        if (!is_open_animation && is_open) {
+            is_close_animation = true;
+            is_open = false;
+        }
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        if (!is_open) is_running = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        is_running = false;
+    }
+}
+
 
 void Render::clean_up() {
     glDeleteBuffers(1, &VBO);
@@ -302,4 +220,8 @@ int Render::create_window() {
     }
 
     return 0;
+}
+
+void draw_microwave() {
+    
 }
