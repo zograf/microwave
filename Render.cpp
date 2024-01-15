@@ -306,6 +306,24 @@ void Render::handle_input(const Shader& unified_shader, const Shader& light_shad
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         is_running = false;
     }
+
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+        glEnable(GL_PROGRAM_POINT_SIZE);
+        glPointSize(2);
+    }
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glLineWidth(2.0f);
+    }
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+        glDisable(GL_BLEND);
+    }
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+        glEnable(GL_BLEND);
+    }
 }
 
 
