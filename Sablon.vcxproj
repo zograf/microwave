@@ -146,6 +146,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="Shader.hpp" />
+    <ClCompile Include="Signature.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="basic.frag" />
@@ -158,11 +159,14 @@
     <ClInclude Include="Mesh.hpp" />
     <ClInclude Include="Model.hpp" />
     <ClInclude Include="Render.h" />
+    <ClInclude Include="Signature.h" />
     <ClInclude Include="texture.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="light.frag" />
     <Content Include="light.vert" />
+    <Content Include="signature.frag" />
+    <Content Include="signature.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

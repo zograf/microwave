@@ -9,6 +9,7 @@
 
 #include "Door.h"
 #include "Lamp.h"
+#include "Signature.h"
 
 void Render::setup_defaults(const Shader& unified_shader, const Shader& light_shader) {
     projection_p = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
@@ -68,6 +69,8 @@ int Render::do_render(const Shader& unified_shader, const Shader& light_shader) 
 }
 
 void Render::render_loop(const Shader& unified_shader, const Shader& light_shader) {
+    Shader signature_shader = Shader("signature.vert", "signature.frag");
+    
     Model plate("res/microwave-plate.obj");
     Model microwave("res/microwave.obj");
     Model knob("res/knob.obj");
@@ -77,6 +80,8 @@ void Render::render_loop(const Shader& unified_shader, const Shader& light_shade
     Lamp lamp_right = Lamp(false);
     Lamp lamp_left = Lamp(true);
     Lamp lamp_inside = Lamp(true, true);
+
+    Signature signature = Signature(TextureFromFile("signature.png", "res"));
 
     glm::mat4 microwave_model = glm::mat4(1.0f);
 
@@ -120,7 +125,7 @@ void Render::render_loop(const Shader& unified_shader, const Shader& light_shade
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         handle_input(unified_shader, light_shader);
-        
+
         unified_shader.setMat4("uV", view);
         unified_shader.setMat4("uP", active_projection);
 
@@ -142,7 +147,7 @@ void Render::render_loop(const Shader& unified_shader, const Shader& light_shade
                 is_close_animation = false;
             }
         }
-        
+
         if (is_running) {
             double now = glfwGetTime();
             if (now - prev >= 1) {
@@ -151,19 +156,21 @@ void Render::render_loop(const Shader& unified_shader, const Shader& light_shade
                 prev = now;
             }
 
-            if(seconds == 0) {
+            if (seconds == 0) {
                 is_running = false;
             }
-        } else prev = glfwGetTime();
-        
-        if (is_running)     unified_shader.setVec3("pointLights[0].color", glm::mix(glm::vec3(0.0f, 0.0f, 0.0f),
+        }
+        else prev = glfwGetTime();
+
+        if (is_running)
+            unified_shader.setVec3("pointLights[0].color", glm::mix(glm::vec3(0.0f, 0.0f, 0.0f),
                                                                     glm::vec3(1.0f, 1.0f, 0.0f),
                                                                     abs(sin(glfwGetTime() * 10))));
-        else                unified_shader.setVec3("pointLights[0].color", 0.0, 0.0, 0.0);
+        else unified_shader.setVec3("pointLights[0].color", 0.0, 0.0, 0.0);
 
-        if (seconds == 0)   unified_shader.setVec3("pointLights[1].color", 1.0, 1.0, 0.0);
-        else                unified_shader.setVec3("pointLights[1].color", 0.0, 0.0, 0.0);
-        
+        if (seconds == 0) unified_shader.setVec3("pointLights[1].color", 1.0, 1.0, 0.0);
+        else unified_shader.setVec3("pointLights[1].color", 0.0, 0.0, 0.0);
+
         if (is_running) {
             plate_model = glm::rotate(plate_model, glm::radians(3.0f), glm::vec3(0, 1, 0));
             unified_shader.setVec3("spotLight.color", 1, 1, 0.7);
@@ -189,30 +196,35 @@ void Render::render_loop(const Shader& unified_shader, const Shader& light_shade
         knob.Draw(unified_shader);
 
         // LIGHT
-        
+
         light_shader.use();
         light_shader.setMat4("view", view);
         light_shader.setMat4("projection", active_projection);
 
-        if (seconds == 0)   finished_color = glm::vec3(1.0f, 1.0f, 0.0f);
-        else                finished_color = glm::vec3(0.1f, 0.1f, 0.0f);
+        if (seconds == 0) finished_color = glm::vec3(1.0f, 1.0f, 0.0f);
+        else finished_color = glm::vec3(0.1f, 0.1f, 0.0f);
         lamp_left.draw(light_shader, finished_color);
 
         if (is_running) {
             inside_color = glm::vec3(1.0f, 1.0f, 0.0f);
-            flashing_color = glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), abs(sin(glfwGetTime() * 10)));
-        } else {
+            flashing_color = glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f),
+                                      abs(sin(glfwGetTime() * 10)));
+        }
+        else {
             inside_color = glm::vec3(0.1f, 0.1f, 0.0f);
             flashing_color = glm::vec3(0.1f, 0.1f, 0.0f);
         }
         lamp_inside.draw(light_shader, inside_color);
         lamp_right.draw(light_shader, flashing_color);
 
-        // DOOR
 
+        // SIGNATURE
+        signature.draw(signature_shader, window_width, window_height);
+        
+        // DOOR
         unified_shader.use();
         door.draw(unified_shader);
-        
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -360,7 +372,4 @@ int Render::create_window() {
     }
 
     return 0;
-}
-
-void draw_microwave() {
 }
