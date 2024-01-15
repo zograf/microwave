@@ -8,42 +8,75 @@
 #include <iostream>
 
 #include "Door.h"
+#include "Lamp.h"
 
-void Render::setup_defaults(const Shader& unified_shader) {
+void Render::setup_defaults(const Shader& unified_shader, const Shader& light_shader) {
     projection_p = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
     projection_o = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
     view = glm::lookAt(glm::vec3(cam_x, cam_y, cam_z), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 2.0f, 0.0f));
     glm::vec3 uViewPos = glm::inverse(view)[3];
+    
+    light_shader.use();
+    light_shader.setMat4("projection", projection_p);
+    light_shader.setMat4("view", view);
 
     unified_shader.use();
     unified_shader.setVec3("uViewPos", uViewPos);
     unified_shader.setMat4("uP", projection_p);
     unified_shader.setMat4("uV", view);
-    unified_shader.setVec3("light.color", 1, 1, 0.7);
-    unified_shader.setVec3("light.ambient", 0.4f, 0.4f, 0.4f);
-    unified_shader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
-    unified_shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-    unified_shader.setFloat("light.constant", 1.0f);
-    unified_shader.setFloat("light.linear", 0.9f);
-    unified_shader.setFloat("light.quadratic", 0.32f);
-    unified_shader.setVec3("light.position", 0.2f, 0.14f, 0.12f);
-    unified_shader.setVec3("light.direction", glm::vec3(-0.3, -3.0, 0.1));
-    unified_shader.setFloat("light.cutOff", glm::cos(glm::radians(45.0f)));
-    unified_shader.setFloat("light.outerCutOff", glm::cos(glm::radians(55.0f)));
+    
+    unified_shader.setVec3("spotLight.color", 0, 0, 0);
+    unified_shader.setVec3("spotLight.ambient", 0.1f, 0.1f, 0.1f);
+    unified_shader.setVec3("spotLight.diffuse", 0.8f, 0.8f, 0.8f);
+    unified_shader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+    unified_shader.setFloat("spotLight.constant", 0.5f);
+    unified_shader.setFloat("spotLight.linear", 0.9f);
+    unified_shader.setFloat("spotLight.quadratic", 0.32f);
+    unified_shader.setVec3("spotLight.position", 0.2f, 0.14f, 0.12f);
+    unified_shader.setVec3("spotLight.direction", glm::vec3(-0.3, -3.0, 0.1));
+    unified_shader.setFloat("spotLight.cutOff", glm::cos(glm::radians(45.0f)));
+    unified_shader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(55.0f)));
+
+    // Ova je desna lampica
+    unified_shader.setVec3("pointLights[0].color", 1, 1, 1);
+    unified_shader.setVec3("pointLights[0].ambient", 0.1f, 0.1f, 0.1f);
+    unified_shader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+    unified_shader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
+    unified_shader.setFloat("pointLights[0].constant", 0.0f);
+    unified_shader.setFloat("pointLights[0].linear", 9.9f);
+    unified_shader.setFloat("pointLights[0].quadratic", 9.32f);
+    unified_shader.setVec3("pointLights[0].position", 0.52f, -0.18f, -0.55f);
+
+    // Ova je leva lampica
+    unified_shader.setVec3("pointLights[1].color", 1, 1, 1);
+    //unified_shader.setVec3("pointLights[1].ambient", 0.1f, 0.1f, 0.1f);
+    //unified_shader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+    //unified_shader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
+    unified_shader.setVec3("pointLights[1].ambient", 0.1f, 0.1f, 0.1f);
+    unified_shader.setVec3("pointLights[1].diffuse", 0.0f, 0.0f, 0.0f);
+    unified_shader.setVec3("pointLights[1].specular", 0.0f, 0.0f, 0.0f);
+    unified_shader.setFloat("pointLights[1].constant", 0.0f);
+    unified_shader.setFloat("pointLights[1].linear", 9.9f);
+    unified_shader.setFloat("pointLights[1].quadratic", 9.32f);
+    unified_shader.setVec3("pointLights[1].position", 0.52f, -0.18f, -0.3f);
 }
 
-int Render::do_render(const Shader& unified_shader) {
-    setup_defaults(unified_shader);
-    render_loop(unified_shader);
+int Render::do_render(const Shader& unified_shader, const Shader& light_shader) {
+    setup_defaults(unified_shader, light_shader);
+    render_loop(unified_shader, light_shader);
 
     clean_up();
     return 0;
 }
 
-void Render::render_loop(const Shader& unified_shader) {
+void Render::render_loop(const Shader& unified_shader, const Shader& light_shader) {
     Model plate("res/microwave-plate.obj");
     Model microwave("res/microwave.obj");
+    
     Door door = Door();
+    Lamp lamp_right = Lamp(false);
+    Lamp lamp_left = Lamp(true);
+    Lamp lamp_inside = Lamp(true, true);
 
     glm::mat4 microwave_model = glm::mat4(1.0f);
     
@@ -63,17 +96,22 @@ void Render::render_loop(const Shader& unified_shader) {
     glEnable(GL_BLEND);
 
     int degree_counter = 0;
+
+    glm::vec3 flashing_color = glm::vec3(0.2, 0.2, 0.0);
+    glm::vec3 inside_color = glm::vec3(0.2, 0.2, 0.0);
+    glm::vec3 finished_color = glm::vec3(0.2, 0.2, 0.0);
+    
     while (!glfwWindowShouldClose(window)) {
-        handle_input(unified_shader);
+        handle_input(unified_shader, light_shader);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         unified_shader.setMat4("uV", view);
 
         if (is_running) {
             plate_model = glm::rotate(plate_model, glm::radians(3.0f), glm::vec3(0, 1, 0));
-            unified_shader.setVec3("light.color", 1, 1, 0.7);
+            unified_shader.setVec3("spotLight.color", 1, 1, 0.7);
         }
         else {
-            unified_shader.setVec3("light.color", 0, 0, 0);
+            unified_shader.setVec3("spotLight.color", 0, 0, 0);
         }
 
         if (is_open_animation) {
@@ -103,6 +141,21 @@ void Render::render_loop(const Shader& unified_shader) {
         plate.Draw(unified_shader);
 
         // Objects
+        //float diff = abs(sin(glfwGetTime() * 10));
+        //float spec = abs(sin(glfwGetTime() * 10));
+        //unified_shader.setVec3("pointLights[0].diffuse", diff, diff, diff);
+        //unified_shader.setVec3("pointLights[0].specular", spec, spec, spec);
+        unified_shader.setVec3("pointLights[0].color", glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), abs(sin(glfwGetTime()*10))));
+        
+        light_shader.use();
+        light_shader.setMat4("view", view);
+        light_shader.setMat4("projection", projection_p);
+        //flashing_color = glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), abs(sin(glfwGetTime() * 10)));
+        lamp_right.draw(light_shader, flashing_color);
+        lamp_left.draw(light_shader, finished_color);
+        lamp_inside.draw(light_shader, inside_color);
+
+        unified_shader.use();
         door.draw(unified_shader);
 
         glfwSwapBuffers(window);
@@ -110,7 +163,7 @@ void Render::render_loop(const Shader& unified_shader) {
     }
 }
 
-void Render::handle_input(const Shader& unified_shader) {
+void Render::handle_input(const Shader& unified_shader, const Shader& light_shader) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
@@ -223,5 +276,4 @@ int Render::create_window() {
 }
 
 void draw_microwave() {
-    
 }

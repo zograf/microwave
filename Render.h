@@ -26,10 +26,10 @@ private:
     glm::mat4 projection_o;
     glm::mat4 projection_p;
 
-    void handle_input(const Shader &unified_shader);
-    void render_loop(const Shader &unified_shader);
-    void setup_defaults(const Shader &unified_shader);
-    int do_render(const Shader &unified_shader);
+    void handle_input(const Shader &unified_shader, const Shader &light_shader);
+    void render_loop(const Shader &unified_shader, const Shader &light_shader);
+    void setup_defaults(const Shader &unified_shader, const Shader &light_shader);
+    int do_render(const Shader &unified_shader, const Shader &light_shader);
     
     int create_window();
     void clean_up();
@@ -40,6 +40,7 @@ public:
     Render() {
         if (create_window()) return;
         const Shader unified_shader = Shader("basic.vert", "basic.frag");
-        do_render(unified_shader);
+        const Shader light_shader = Shader("light.vert", "light.frag");
+        do_render(unified_shader, light_shader);
     }
 };
