@@ -21,10 +21,15 @@ private:
     bool is_open_animation = false;
     bool is_close_animation = false;
     bool is_open = false;
+    int seconds = 0;
 
     glm::mat4 view;
     glm::mat4 projection_o;
     glm::mat4 projection_p;
+    glm::mat4 active_projection;
+
+    const float SLIDER_STEP = 0.3f;
+    glm::mat4 knob_model;
 
     void handle_input(const Shader &unified_shader, const Shader &light_shader);
     void render_loop(const Shader &unified_shader, const Shader &light_shader);
